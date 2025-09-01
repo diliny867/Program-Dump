@@ -24,6 +24,7 @@ avl_node_t* avl_remove(avl_node_t* node, avl_value_t val, int* removed);
 int avl_depth(avl_node_t* node);
 size_t avl_size(avl_node_t* node);
 
+
 #ifdef AVLTREE_IMPLEMENTATION
 
 #include <stdio.h>
@@ -47,8 +48,8 @@ void avl_print(avl_node_t* node){
 
     size_t pref_size = avl_chkheight(node) * 4;
     char* prefix = (char*)malloc(sizeof(char) * (pref_size + 1));
-
     prefix[pref_size] = '\0';
+    
     _avl_print(node, prefix, 0, 0);
 
     free(prefix);
@@ -145,15 +146,13 @@ avl_node_t* avl_insert(avl_node_t* node, avl_value_t val) {
     return avl_balance(node);
 }
 
-static avl_node_t* alv_extract_min(avl_node_t* node, avl_node_t** min){
+static avl_node_t* alv_remove_min(avl_node_t* node){
     if(node == NULL) return NULL;
 
-    if(node->left == NULL){
-        *min = node;
+    if(node->left == NULL)
         return node->right;
-    }
     
-    node->left = alv_extract_min(node->left, min);
+    node->left = alv_remove_min(node->left);
 
     return avl_balance(node);
 }
@@ -167,11 +166,14 @@ static avl_node_t* _avl_remove(avl_node_t* node, avl_value_t val, int* removed){
         avl_node_t* left = node->left;
         avl_node_t* right = node->right;
         free(node);
-        if(node->height == 0 || right == NULL)
+        if(right == NULL)
             return left;
 
-        avl_node_t* min;
-        min->right = alv_extract_min(right, &min);
+        avl_node_t* min = right;
+        while(min->left)
+            min = min->left;
+
+        min->right = alv_remove_min(right);
         min->left = left;
 
         return avl_balance(min);
